@@ -1,0 +1,33 @@
+# Grimoire book configuration for the @deckyard/virtualboxws documentation.
+
+[book]
+title = "@deckyard/virtualboxws"
+description = "Oracle VirtualBox 7 through its SOAP web service (vboxwebsrv): machines, power, snapshots, clones, OVA import and export, guest properties"
+language = "en"
+src = "docs"
+
+[build]
+out = "site"
+clean = true
+jobs = 0
+
+[html]
+theme = "nordic"
+mode = "auto"
+navPosition = "left"
+tocPosition = "right"
+tocDepth = 3
+sectionNumbers = true
+titleUrl = "https://deckyard.github.io/deck-virtualboxws/"
+repoUrl = "https://github.com/deckyard/deck-virtualboxws"
+repoLabel = "Source"
+editUrl = "https://github.com/deckyard/deck-virtualboxws/edit/main/docs/{path}"
+
+[highlight]
+enabled = true
+
+[search]
+enabled = true
+
+[pdf]
+enabled = false

@@ -1,0 +1,18 @@
+[package]
+name = "@deckyard/virtualboxws"
+version = "0.1.0"
+description = "Oracle VirtualBox 7 through its SOAP web service (vboxwebsrv): machines, power, snapshots, clones, OVA import and export, guest properties"
+license = "LGPL-3.0-only"
+authors = ["mplx <mplx@jennifer-lang.dev>"]
+# The deck talks SOAP over HTTP(S) to VirtualBox's web service, so it needs
+# `net`. No `exec`: running VBoxManage is the separate virtualbox deck. No `sql`.
+capabilities = ["net"]
+keywords = ["virtualbox", "vboxwebsrv", "soap", "vm", "virtualization", "snapshot", "ova"]
+
+[package.urls]
+deck = "https://raw.githubusercontent.com/deckyard/deck-virtualboxws/main/deck.toml"
+homepage = "https://github.com/deckyard/deck-virtualboxws"
+manual = "https://deckyard.github.io/deck-virtualboxws/"
+
+[engines]
+jennifer = ">=0.26.0"
