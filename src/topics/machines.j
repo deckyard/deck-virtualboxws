@@ -98,7 +98,7 @@ export def struct VmInfo {
  *
  * @param s {Session} the session
  * @return {list of Vm} the machines
- * @throws {Error} kind "virtualboxws" if a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a call fails
  * @example
  *   for (def m in virtualboxws.vms($s)) {
  *       io.printf("%s %s\n", $m.uuid, $m.name);
@@ -122,7 +122,7 @@ export func vms(s as Session) {
  *
  * @param s {Session} the session
  * @return {list of Vm} the machines
- * @throws {Error} kind "virtualboxws" if a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a call fails
  */
 export func runningVms(s as Session) {
     def refs as list of string init all(
@@ -150,7 +150,7 @@ export func runningVms(s as Session) {
  * @param s {Session} the session
  * @param ref {string} the machine
  * @return {Vm} its name (`<inaccessible>` if VirtualBox cannot read it) and UUID
- * @throws {Error} kind "virtualboxws" if a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a call fails
  */
 func vmOf(s as Session, ref as string) {
     def uuid as string init attribute($s, "IMachine", "Id", $ref, "getId");
@@ -166,14 +166,14 @@ func vmOf(s as Session, ref as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @return {bool} whether it is
- * @throws {Error} kind "virtualboxws" if the name is unusable or a call fails otherwise
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or a call fails otherwise
  */
 export func hasVm(s as Session, vm as string) {
     def ref as string init "";
     try {
         $ref = machine($s, $vm);
     } catch (e) {
-        if (errorCode($e) == "VBOX_E_OBJECT_NOT_FOUND") {
+        if ($e.kind == "virtualboxws" and $e.code == "VBOX_E_OBJECT_NOT_FOUND") {
             return false;
         }
         throw $e;
@@ -188,7 +188,7 @@ export func hasVm(s as Session, vm as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @return {VmInfo} the details
- * @throws {Error} kind "virtualboxws" if the name is unusable, there is no such machine (`VBOX_E_OBJECT_NOT_FOUND`) or a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable, there is no such machine (`VBOX_E_OBJECT_NOT_FOUND`) or a call fails
  * @example
  *   def i as virtualboxws.VmInfo init virtualboxws.info($s, "web");
  *   io.printf("%s: %s, %d MiB\n", $i.name, $i.state, $i.memoryMb);
@@ -230,7 +230,7 @@ export func info(s as Session, vm as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @return {string} `poweroff`, `running`, `paused`, `saved`, `aborted`, ...
- * @throws {Error} kind "virtualboxws" as `info`
+ * @throws {VirtualboxwsError} kind "virtualboxws" as `info`
  */
 export func state(s as Session, vm as string) {
     def m as string init machine($s, $vm);
@@ -271,7 +271,7 @@ func whole(s as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or VirtualBox refuses (it already runs: `VBOX_E_INVALID_OBJECT_STATE`)
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or VirtualBox refuses (it already runs: `VBOX_E_INVALID_OBJECT_STATE`)
  * @example
  *   virtualboxws.start($s, "web");
  */
@@ -286,7 +286,7 @@ export func start(s as Session, vm as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @param mode {string} `headless` (no window), `gui` (a window on the host's desktop) or `separate`
- * @throws {Error} kind "virtualboxws" if the name or mode is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name or mode is unusable or VirtualBox refuses
  */
 export func startWith(s as Session, vm as string, mode as string) {
     if (not lists.contains(START_MODES, $mode)) {
@@ -312,7 +312,7 @@ export func startWith(s as Session, vm as string, mode as string) {
  * @param vm {string} the machine's name or UUID
  * @param method {string} the `IConsole` method, such as `powerDown`
  * @param waits {bool} whether it returns an `IProgress` to wait for
- * @throws {Error} kind "virtualboxws" if the machine is not running or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the machine is not running or VirtualBox refuses
  */
 func onConsole(s as Session, vm as string, method as string, waits as bool) {
     def m as string init machine($s, $vm);
@@ -339,7 +339,7 @@ func onConsole(s as Session, vm as string, method as string, waits as bool) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not running
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not running
  */
 export func powerOff(s as Session, vm as string) {
     onConsole($s, $vm, "powerDown", true);
@@ -351,7 +351,7 @@ export func powerOff(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not running
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not running
  */
 export func acpiShutdown(s as Session, vm as string) {
     onConsole($s, $vm, "powerButton", false);
@@ -362,7 +362,7 @@ export func acpiShutdown(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not running
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not running
  */
 export func pause(s as Session, vm as string) {
     onConsole($s, $vm, "pause", false);
@@ -373,7 +373,7 @@ export func pause(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not paused
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not paused
  */
 export func resume(s as Session, vm as string) {
     onConsole($s, $vm, "resume", false);
@@ -384,7 +384,7 @@ export func resume(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not running
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not running
  */
 export func reset(s as Session, vm as string) {
     onConsole($s, $vm, "reset", false);
@@ -396,7 +396,7 @@ export func reset(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if the name is unusable or the machine is not running
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or the machine is not running
  */
 export func saveState(s as Session, vm as string) {
     def m as string init machine($s, $vm);

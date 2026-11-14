@@ -121,13 +121,51 @@ export def struct Session {
 };
 
 /**
+ * A failed call. Every error of kind `"virtualboxws"` is one, so its fields
+ * are safe to read once the kind matches. (A cancelled task stays kind
+ * `"cancelled"`.)
+ *
+ * @field kind {string} always `"virtualboxws"`
+ * @field message {string} `virtualboxws: ` and what went wrong
+ * @field reason {string} `"fault"` (the service answered with a SOAP fault), `"http"` (an HTTP error without a fault), `"timeout"` (no answer within the deadline, or a long operation not done by it), `"unreachable"` (no connection or no complete reply), `"reply"` (a reply that is not the expected SOAP), `"operation"` (a long operation such as a clone or an import failed; `code` is its result code), or `""` for any other failure (a check before the call, a refused logon's follow-up checks)
+ * @field code {string} the fault's code: a `VBOX_E_*` or COM `E_*` name, `0x` and eight hex digits, or `INVALID_OBJECT` for a reference the service no longer knows; `""` when there is none
+ * @field status {int} the HTTP status of the reply, 0 when there was none
+ */
+export def struct VirtualboxwsError {
+    kind as string,
+    message as string,
+    reason as string,
+    code as string,
+    status as int
+};
+
+/**
  * Throw a virtualboxws error.
  *
  * @param message {string} what went wrong, without the `virtualboxws: ` prefix
- * @throws {Error} kind "virtualboxws", always
+ * @throws {VirtualboxwsError} kind "virtualboxws", always
  */
 func fail(message as string) {
-    throw Error{kind: "virtualboxws", message: "virtualboxws: " + $message};
+    failWith($message, "", "", 0);
+}
+
+/**
+ * Throw a virtualboxws error with its reason, code and HTTP status.
+ *
+ * @param message {string} what went wrong, without the `virtualboxws: ` prefix
+ * @param reason {string} see `VirtualboxwsError`
+ * @param code {string} the fault's code, `""` for none
+ * @param status {int} the HTTP status, 0 for none
+ * @throws {VirtualboxwsError} kind "virtualboxws", always
+ */
+func failWith(message as string, reason as string, code as string, status as int) {
+    throw VirtualboxwsError{
+        kind: "virtualboxws",
+        message: "virtualboxws: " + $message,
+        reason: $reason,
+        code: $code,
+        status: $status
+    };
 }
 
 /**
@@ -164,7 +202,7 @@ func cleaned(s as string, most as int) {
  *
  * @param url {string} the service's URL: `https://host:18083/`, or `http://localhost:18083/`
  * @return {Config} the configuration
- * @throws {Error} kind "virtualboxws" if the URL is not http(s) with a host, holds a login part, a query or a fragment, or is plain http to another machine
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the URL is not http(s) with a host, holds a login part, a query or a fragment, or is plain http to another machine
  * @example
  *   def c as virtualboxws.Config init virtualboxws.endpoint("https://vmhost:18083/");
  */
@@ -217,7 +255,7 @@ export func withPlainHttp(c as Config) {
  * @param c {Config} the configuration
  * @param ms {int} milliseconds, 1000 to 86400000
  * @return {Config} the changed copy
- * @throws {Error} kind "virtualboxws" if it is out of range
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is out of range
  */
 export func withTimeout(c as Config, ms as int) {
     checkRange($ms, 1000, 86400000, "the timeout");
@@ -232,7 +270,7 @@ export func withTimeout(c as Config, ms as int) {
  * @param c {Config} the configuration
  * @param ms {int} milliseconds, 1000 to 86400000
  * @return {Config} the changed copy
- * @throws {Error} kind "virtualboxws" if it is out of range
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is out of range
  */
 export func withLongTimeout(c as Config, ms as int) {
     checkRange($ms, 1000, 86400000, "the long timeout");
@@ -247,7 +285,7 @@ export func withLongTimeout(c as Config, ms as int) {
  * @param c {Config} the configuration
  * @param most {int} bytes, 65536 to 67108864
  * @return {Config} the changed copy
- * @throws {Error} kind "virtualboxws" if it is out of range
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is out of range
  */
 export func withMaxBytes(c as Config, most as int) {
     checkRange($most, 65536, 67108864, "the reply cap");
@@ -260,7 +298,7 @@ export func withMaxBytes(c as Config, most as int) {
  * Refuse a URL the deck should not send a password to.
  *
  * @param c {Config} the configuration
- * @throws {Error} kind "virtualboxws" if the URL is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the URL is unusable
  */
 func checkUrl(c as Config) {
     def url as string init $c.url;
@@ -315,7 +353,7 @@ func authority(url as string) {
  *
  * @param value {string} the text
  * @param what {string} what it is, for the message
- * @throws {Error} kind "virtualboxws" if it is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is unusable
  */
 func checkText(value as string, what as string) {
     if ($value == "") {
@@ -329,7 +367,7 @@ func checkText(value as string, what as string) {
  *
  * @param value {string} the text
  * @param what {string} what it is, for the message
- * @throws {Error} kind "virtualboxws" if it is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is unusable
  */
 func checkChars(value as string, what as string) {
     if (len($value) > MAX_ARG) {
@@ -345,7 +383,7 @@ func checkChars(value as string, what as string) {
  * characters, no control character.
  *
  * @param vm {string} the machine's name or UUID
- * @throws {Error} kind "virtualboxws" if it is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is unusable
  */
 func checkVm(vm as string) {
     checkName($vm, "the machine");
@@ -356,7 +394,7 @@ func checkVm(vm as string) {
  *
  * @param name {string} the name
  * @param what {string} what it is, for the message
- * @throws {Error} kind "virtualboxws" if it is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is unusable
  */
 func checkName(name as string, what as string) {
     checkText($name, $what);
@@ -372,7 +410,7 @@ func checkName(name as string, what as string) {
  * @param low {int} the smallest accepted
  * @param high {int} the largest accepted
  * @param what {string} what it is, for the message
- * @throws {Error} kind "virtualboxws" if it is out of range
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is out of range
  */
 func checkRange(n as int, low as int, high as int, what as string) {
     if ($n < $low or $n > $high) {
@@ -393,7 +431,7 @@ func checkRange(n as int, low as int, high as int, what as string) {
  * @param username {string} the user
  * @param password {string} the password
  * @return {Session} the session, for every other call
- * @throws {Error} kind "virtualboxws" if the URL is refused, the service cannot be reached, refuses the logon, or runs VirtualBox older than 7
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the URL is refused, the service cannot be reached, refuses the logon, or runs VirtualBox older than 7
  * @example
  *   def s as virtualboxws.Session init virtualboxws.logon($c, "admin", os.getEnv("VBOX_PASSWORD"));
  */
@@ -410,13 +448,14 @@ export func logon(c as Config, username as string, password as string) {
             $c.timeoutMs,
             "logon");
     } catch (e) {
-        if ($e.kind == "virtualboxws" and
-            strings.startsWith($e.message, "virtualboxws: logon: ") and
-            not strings.contains($e.message, ": cannot reach ") and
-            not strings.contains($e.message, ": no answer from ") and
-            not strings.contains($e.message, ": the reply ")) {
-            fail("logon refused for " + shown($username) + ": " +
-                strings.substring($e.message, len("virtualboxws: logon: ")));
+        # a fault or an HTTP error is the service refusing; the rest is transport
+        if ($e.kind == "virtualboxws" and ($e.reason == "fault" or $e.reason == "http")) {
+            failWith(
+                "logon refused for " + shown($username) + ": " +
+                    strings.substring($e.message, len("virtualboxws: logon: ")),
+                $e.reason,
+                $e.code,
+                $e.status);
         }
         throw $e;
     }
@@ -455,7 +494,7 @@ export func logon(c as Config, username as string, password as string) {
  * End the web session; the service frees every object it held.
  *
  * @param s {Session} the session
- * @throws {Error} kind "virtualboxws" if the service cannot be reached or refuses (a session it already ended is not an error)
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the service cannot be reached or refuses (a session it already ended is not an error)
  */
 export func logoff(s as Session) {
     try {
@@ -466,7 +505,7 @@ export func logoff(s as Session) {
             $s.config.timeoutMs,
             "logoff");
     } catch (e) {
-        if (errorCode($e) != "INVALID_OBJECT") {
+        if ($e.kind != "virtualboxws" or $e.code != "INVALID_OBJECT") {
             throw $e;
         }
     }
@@ -499,7 +538,7 @@ func logoffQuietly(s as Session) {
  * @param method {string} the method, as the WSDL names it: `IVirtualBox_getHomeFolder`, `IMachine_getMemorySize`
  * @param args {map of string to list of string} the parameters
  * @return {map of string to list of string} the reply's elements
- * @throws {Error} kind "virtualboxws" if the method or a parameter name is malformed, or the call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the method or a parameter name is malformed, or the call fails
  * @example
  *   def r as map of string to list of string init virtualboxws.call($s, "IVirtualBox_getHomeFolder",
  *       {"_this": [$s.vbox]});
@@ -526,7 +565,7 @@ export func call(s as Session, method as string, args as map of string to list o
  * @param args {map of string to list of string} the other parameters
  * @param what {string} the operation, for error messages
  * @return {map of string to list of string} the reply's elements
- * @throws {Error} kind "virtualboxws" if the call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the call fails
  */
 func callOn(
     s as Session,
@@ -550,7 +589,7 @@ func callOn(
  * @param this {string} the object's reference
  * @param what {string} the operation, for error messages
  * @return {string} its value
- * @throws {Error} kind "virtualboxws" if the call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the call fails
  */
 func attribute(s as Session, iface as string, name as string, this as string, what as string) {
     return returned(callOn($s, $iface + "_get" + $name, $this, {}, $what));
@@ -566,7 +605,8 @@ func attribute(s as Session, iface as string, name as string, this as string, wh
  * @param timeoutMs {int} the deadline
  * @param what {string} the operation, for error messages
  * @return {map of string to list of string} the reply's elements
- * @throws {Error} kind "virtualboxws" if the service cannot be reached, answers too late, too much or not SOAP, or returns a fault
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the service cannot be reached, answers too late or not SOAP, or returns a fault
+ * @throws {Error} kind "limit" if the reply is over `maxBytes`
  */
 func exchange(
     c as Config,
@@ -592,24 +632,41 @@ func exchange(
     try {
         $r = task.waitTimeout($t, $timeoutMs);
     } catch (e) {
-        if ($e.message == "task cancelled") {
+        # kind "cancelled" (jennifer after 0.25); the message is for older interpreters
+        if ($e.kind == "cancelled" or $e.message == "task cancelled") {
             task.cancel($t);
             task.discard($t);
             throw $e;
         }
         if ($e.kind == "timeout") {
-            # the overall deadline, or a read idle as long: both mean no answer in time
+            # the overall deadline, or a read idle as long: both mean no answer in time.
+            # Only task.waitTimeout's own timeout leaves the task running; the
+            # runtime's message is the one way to tell it from http's.
             if (strings.contains($e.message, "task.waitTimeout")) {
                 task.cancel($t);
                 task.discard($t);
             }
-            fail($what + ": no answer from " + shown($url) + " within " +
-                convert.toString($timeoutMs) + " ms");
+            failWith(
+                $what + ": no answer from " + shown($url) + " within " +
+                    convert.toString($timeoutMs) + " ms",
+                "timeout",
+                "",
+                0);
         }
-        if (strings.contains($e.message, "body exceeds ")) {
-            fail($what + ": the reply is over " + convert.toString($maxBytes) + " bytes");
+        # A cap is kind "limit" (jennifer after 0.25: http, net); the message
+        # match is for older interpreters and goes with the next floor raise.
+        if ($e.kind == "limit" or strings.contains($e.message, "body exceeds ")) {
+            throw Error{
+                kind: "limit",
+                message: "virtualboxws: " + $what + ": the reply is over " +
+                    convert.toString($maxBytes) + " bytes"
+            };
         }
-        fail($what + ": cannot reach " + shown($url) + ": " + cleaned($e.message, 200));
+        failWith(
+            $what + ": cannot reach " + shown($url) + ": " + cleaned($e.message, 200),
+            "unreachable",
+            "",
+            0);
     }
     return reply($r, $method, $what);
 }
@@ -622,7 +679,7 @@ func exchange(
  * @param method {string} the method
  * @param args {map of string to list of string} the parameters
  * @return {string} the envelope
- * @throws {Error} kind "virtualboxws" if a value holds a character XML cannot carry
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a value holds a character XML cannot carry
  */
 func envelope(method as string, args as map of string to list of string) {
     def request as xml.Value init xml.elementNS(VBOX_NS, "vbox:" + $method);
@@ -647,7 +704,7 @@ func envelope(method as string, args as map of string to list of string) {
  * @param method {string} the method called
  * @param what {string} the operation, for error messages
  * @return {map of string to list of string} the reply's elements by name
- * @throws {Error} kind "virtualboxws" for a fault, an HTTP error or a reply that is not the method's
+ * @throws {VirtualboxwsError} kind "virtualboxws" for a fault, an HTTP error or a reply that is not the method's
  */
 func reply(r as http.Response, method as string, what as string) {
     def doc as xml.Value;
@@ -655,30 +712,53 @@ func reply(r as http.Response, method as string, what as string) {
         $doc = xml.decode($r.body);
     } catch (e) {
         if ($r.status != 200) {
-            fail($what + ": HTTP " + convert.toString($r.status) + " " + cleaned($r.statusText, 80));
+            failWith(
+                $what + ": HTTP " + convert.toString($r.status) + " " + cleaned($r.statusText, 80),
+                "http",
+                "",
+                $r.status);
         }
-        fail($what + ": the reply is not XML: " + cleaned($e.message, 120));
+        failWith(
+            $what + ": the reply is not XML: " + cleaned($e.message, 120),
+            "reply",
+            "",
+            $r.status);
     }
     def ns as map of string to string init {"s": SOAP_NS, "v": VBOX_NS};
     if (xml.namespace($doc) != SOAP_NS or xml.localName($doc) != "Envelope" or
         not xml.has($doc, "s:Body", $ns)) {
-        fail($what + ": the reply is not a SOAP envelope (HTTP " + convert.toString($r.status) + ")");
+        failWith(
+            $what + ": the reply is not a SOAP envelope (HTTP " + convert.toString($r.status) + ")",
+            "reply",
+            "",
+            $r.status);
     }
     def found as list of xml.Value init xml.children(xml.get($doc, "s:Body", $ns));
     if (len($found) != 1) {
-        fail($what + ": the reply's body holds " + convert.toString(len($found)) +
-            " elements, not one");
+        failWith(
+            $what + ": the reply's body holds " + convert.toString(len($found)) +
+                " elements, not one",
+            "reply",
+            "",
+            $r.status);
     }
     def top as xml.Value init $found[0];
     if (xml.namespace($top) == SOAP_NS and xml.localName($top) == "Fault") {
-        failFault($top, $what);
+        failFault($top, $what, $r.status);
     }
     if ($r.status != 200) {
-        fail($what + ": HTTP " + convert.toString($r.status) + " " + cleaned($r.statusText, 80));
+        failWith(
+            $what + ": HTTP " + convert.toString($r.status) + " " + cleaned($r.statusText, 80),
+            "http",
+            "",
+            $r.status);
     }
     if (xml.namespace($top) != VBOX_NS or xml.localName($top) != $method + "Response") {
-        fail($what + ": the reply is " + shown(xml.localName($top)) + ", not " + $method +
-            "Response");
+        failWith(
+            $what + ": the reply is " + shown(xml.localName($top)) + ", not " + $method + "Response",
+            "reply",
+            "",
+            $r.status);
     }
     def out as map of string to list of string init {};
     for (def child in xml.children($top)) {
@@ -700,9 +780,10 @@ func reply(r as http.Response, method as string, what as string) {
  *
  * @param fault {xml.Value} the `Fault` element
  * @param what {string} the operation
- * @throws {Error} kind "virtualboxws", always
+ * @param status {int} the HTTP status of the reply
+ * @throws {VirtualboxwsError} kind "virtualboxws", always, with `reason` `"fault"`
  */
-func failFault(fault as xml.Value, what as string) {
+func failFault(fault as xml.Value, what as string, status as int) {
     def text as string init "";
     if (xml.has($fault, "faultstring")) {
         $text = xml.text(xml.get($fault, "faultstring"));
@@ -723,7 +804,7 @@ func failFault(fault as xml.Value, what as string) {
     if ($code != "") {
         $tail = " (" + $code + ")";
     }
-    fail($what + ": " + cleaned($text, 300) + $tail);
+    failWith($what + ": " + cleaned($text, 300) + $tail, "fault", $code, $status);
 }
 
 /**
@@ -758,30 +839,24 @@ func codeName(code as string) {
 /**
  * The code of a virtualboxws error: a `VBOX_E_*` name, a COM `E_*` name, an
  * `0x` hex code VirtualBox gave without a known name, or `INVALID_OBJECT`
- * for a reference the service no longer knows (an expired session).
+ * for a reference the service no longer knows (an expired session). It is
+ * the error's `code` field; kept for code written before
+ * `VirtualboxwsError`. The parameter is a `VirtualboxwsError`, so match the
+ * kind before passing a caught error.
  *
- * @param e {Error} a caught error
- * @return {string} the code, `""` if it is not a virtualboxws fault or names none
+ * @param e {VirtualboxwsError} a caught error of kind "virtualboxws"
+ * @return {string} the code, `""` if it names none
  * @example
  *   try {
  *       virtualboxws.info($s, "web");
  *   } catch (e) {
- *       if (virtualboxws.errorCode($e) == "VBOX_E_OBJECT_NOT_FOUND") {
+ *       if ($e.kind == "virtualboxws" and $e.code == "VBOX_E_OBJECT_NOT_FOUND") {
  *           io.printf("no such machine\n");
  *       }
  *   }
  */
-export func errorCode(e as Error) {
-    if ($e.kind != "virtualboxws") {
-        return "";
-    }
-    def m as regex.Match init regex.find(
-        ' \(((VBOX_)?E_[A-Z0-9_]+|0x[0-9A-F]{8}|INVALID_OBJECT)\)$',
-        $e.message);
-    if ($m.start < 0) {
-        return "";
-    }
-    return $m.groups[0];
+export func errorCode(e as VirtualboxwsError) {
+    return $e.code;
 }
 
 /**
@@ -828,7 +903,7 @@ func all(r as map of string to list of string, name as string) {
  * @param r {map of string to list of string} the reply
  * @param what {string} the operation, for the message
  * @return {string} the reference
- * @throws {Error} kind "virtualboxws" if it is not one
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is not one
  */
 func refOf(r as map of string to list of string, what as string) {
     def ref as string init returned($r);
@@ -841,7 +916,7 @@ func refOf(r as map of string to list of string, what as string) {
  *
  * @param ref {string} the value
  * @param what {string} the operation, for the message
- * @throws {Error} kind "virtualboxws" if it is not one
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is not one
  */
 func checkRef(ref as string, what as string) {
     if (not regex.matches(REF, $ref)) {
@@ -885,7 +960,7 @@ func releaseAll(s as Session, refs as list of string) {
  *
  * @param s {Session} the session
  * @param ref {string} the reference
- * @throws {Error} kind "virtualboxws" if it is not a reference or the service refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is not a reference or the service refuses
  */
 export func releaseRef(s as Session, ref as string) {
     checkRef($ref, "release");
@@ -900,7 +975,7 @@ export func releaseRef(s as Session, ref as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @return {string} the reference
- * @throws {Error} kind "virtualboxws" if the name is unusable or there is no such machine (`VBOX_E_OBJECT_NOT_FOUND`)
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable or there is no such machine (`VBOX_E_OBJECT_NOT_FOUND`)
  */
 func machine(s as Session, vm as string) {
     checkVm($vm);
@@ -914,7 +989,7 @@ func machine(s as Session, vm as string) {
  *
  * @param s {Session} the session
  * @return {string} its reference
- * @throws {Error} kind "virtualboxws" if the service refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the service refuses
  */
 func newSession(s as Session) {
     return refOf(
@@ -935,7 +1010,7 @@ func newSession(s as Session) {
  * @param sessionRef {string} the `ISession`
  * @param lockType {string} `Shared` (a running machine) or `Write` (a stopped one, exclusively)
  * @param what {string} the operation, for error messages
- * @throws {Error} kind "virtualboxws" if it is locked elsewhere or the service refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is locked elsewhere or the service refuses
  */
 func lock(
     s as Session,
@@ -975,7 +1050,7 @@ func unlockAndRelease(s as Session, sessionRef as string) {
  * @param progress {string} the progress object
  * @param timeoutMs {int} the deadline
  * @param what {string} the operation, for error messages
- * @throws {Error} kind "virtualboxws" if the operation fails (with its error text and code) or runs past the deadline
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the operation fails (with its error text and code) or runs past the deadline
  */
 func waitFor(s as Session, progress as string, timeoutMs as int, what as string) {
     checkRef($progress, $what);
@@ -989,7 +1064,11 @@ func waitFor(s as Session, progress as string, timeoutMs as int, what as string)
             } catch (e) {
                 $left = 0;
             }
-            fail($what + ": not done after " + convert.toString($timeoutMs) + " ms, cancelled");
+            failWith(
+                $what + ": not done after " + convert.toString($timeoutMs) + " ms, cancelled",
+                "timeout",
+                "",
+                0);
         }
         def step as int init PROGRESS_STEP_MS;
         if ($left < $step) {
@@ -1025,5 +1104,5 @@ func waitFor(s as Session, progress as string, timeoutMs as int, what as string)
     if ($name != "") {
         $tail = " (" + $name + ")";
     }
-    fail($what + ": " + cleaned($text, 300) + $tail);
+    failWith($what + ": " + cleaned($text, 300) + $tail, "operation", $name, 0);
 }

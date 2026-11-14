@@ -392,6 +392,7 @@ func testLogonRefusals() {
         testing.assertEqual(
             $e.message,
             "virtualboxws: logon refused for \"ada\": Authentication failed");
+        testing.assertEqual($e.reason, "fault");
     }
     stopFake($f);
     $f = startFake({
@@ -466,9 +467,12 @@ func testFaultsCarryTextAndCode() {
             $e.message,
             "virtualboxws: findMachine ghost: Could not find a registered machine named 'ghost' (VBOX_E_OBJECT_NOT_FOUND)");
         testing.assertEqual(errorCode($e), "VBOX_E_OBJECT_NOT_FOUND");
+        # a VirtualboxwsError: the reason, the code and the HTTP status as fields
+        testing.assertEqual($e.reason, "fault");
+        testing.assertEqual($e.code, "VBOX_E_OBJECT_NOT_FOUND");
+        testing.assertTrue($e.status > 0);
     }
     stopFake($f);
-    testing.assertEqual(errorCode(Error{kind: "runtime", message: "x (VBOX_E_FILE_ERROR)"}), "");
 }
 
 func testCodeNames() {
@@ -540,6 +544,7 @@ func testARequestPastItsDeadline() {
             $e.message,
             "virtualboxws: IVirtualBox_getVersion: no answer from \"" + $f.url +
                 "\" within 1000 ms");
+        testing.assertEqual($e.reason, "timeout");
     }
     testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 2500);
     stopFake($f);
@@ -558,6 +563,7 @@ func testAReplyOverTheCap() {
         testing.assertEqual(
             $e.message,
             "virtualboxws: IVirtualBox_getVersion: the reply is over 65536 bytes");
+        testing.assertEqual($e.kind, "limit");
     }
     stopFake($f);
 }

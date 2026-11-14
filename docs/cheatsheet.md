@@ -10,7 +10,8 @@ Every export of `@deckyard/virtualboxws`. Guides are listed in
 import "@deckyard/virtualboxws/" as virtualboxws;
 ```
 
-Every failure is `Error{kind: "virtualboxws"}`. A `c` argument is a
+Every failure is a `VirtualboxwsError` (kind `"virtualboxws"`), except a
+cancelled task (kind `"cancelled"`). A `c` argument is a
 `Config`, an `s` a `Session`, a `vm` a machine's name or UUID.
 
 ## Constants
@@ -37,7 +38,7 @@ Every failure is `Error{kind: "virtualboxws"}`. A `c` argument is a
 | `virtualboxws.logoff(s)` | `null` | end the session; the service frees everything it held |
 | `virtualboxws.call(s, method, args)` | `map of string to list of string` | any other web-service method |
 | `virtualboxws.releaseRef(s, ref)` | `null` | release a reference `call` returned |
-| `virtualboxws.errorCode(e)` | `string` | the `VBOX_E_*` / `E_*` / `0x...` / `INVALID_OBJECT` code of a caught error |
+| `virtualboxws.errorCode(e)` | `string` | a `VirtualboxwsError`'s `code`: `VBOX_E_*` / `E_*` / `0x...` / `INVALID_OBJECT` (read `$e.code` directly) |
 
 ## Machines and power
 
@@ -136,3 +137,15 @@ Every failure is `Error{kind: "virtualboxws"}`. A `c` argument is a
 | `description as string` | its description |
 | `depth as int` | 0 for a first snapshot, 1 below it, ... |
 | `current as bool` | the machine runs from it |
+
+### `VirtualboxwsError`
+
+Every error of kind `"virtualboxws"`.
+
+| Field | Meaning |
+|---|---|
+| `kind as string` | always `"virtualboxws"` |
+| `message as string` | `virtualboxws: ` and what went wrong |
+| `reason as string` | `"fault"`, `"http"`, `"timeout"`, `"unreachable"`, `"reply"` (not the expected SOAP), `"operation"` (a long operation failed), `""` otherwise |
+| `code as string` | the fault's or operation's code: `VBOX_E_*` / `E_*` / `0x...` / `INVALID_OBJECT`, `""` if none |
+| `status as int` | the reply's HTTP status, 0 if there was none |

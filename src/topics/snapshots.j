@@ -29,7 +29,7 @@ export def struct Snapshot {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @return {list of Snapshot} the snapshots, empty without any
- * @throws {Error} kind "virtualboxws" if the name is unusable, there is no such machine or a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable, there is no such machine or a call fails
  * @example
  *   for (def snap in virtualboxws.snapshots($s, "web")) {
  *       io.printf("%s%s\n", strings.repeat("  ", $snap.depth), $snap.name);
@@ -103,7 +103,7 @@ export func snapshots(s as Session, vm as string) {
  * @param name {string} the snapshot's name
  * @param description {string} its description, `""` for none
  * @return {string} the snapshot's UUID
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
  * @example
  *   virtualboxws.takeSnapshot($s, "web", "before-upgrade", "");
  */
@@ -135,7 +135,7 @@ export func takeSnapshot(s as Session, vm as string, name as string, description
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @param name {string} the snapshot's name or UUID
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses (the machine runs, no such snapshot)
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses (the machine runs, no such snapshot)
  */
 export func restoreSnapshot(s as Session, vm as string, name as string) {
     checkName($name, "the snapshot name");
@@ -167,7 +167,7 @@ export func restoreSnapshot(s as Session, vm as string, name as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @param name {string} the snapshot's name or UUID
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
  */
 export func deleteSnapshot(s as Session, vm as string, name as string) {
     checkName($name, "the snapshot name");
@@ -201,7 +201,7 @@ export func deleteSnapshot(s as Session, vm as string, name as string) {
  * @param vm {string} the machine's name or UUID
  * @param newName {string} the clone's name
  * @return {string} the clone's UUID
- * @throws {Error} kind "virtualboxws" if a name is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a name is unusable or VirtualBox refuses
  * @example
  *   virtualboxws.clone($s, "template", "web2");
  */
@@ -221,7 +221,7 @@ export func clone(s as Session, vm as string, newName as string) {
  * @param snapshot {string} the snapshot's name or UUID
  * @param newName {string} the clone's name
  * @return {string} the clone's UUID
- * @throws {Error} kind "virtualboxws" if a name is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if a name is unusable or VirtualBox refuses
  */
 export func linkedClone(s as Session, vm as string, snapshot as string, newName as string) {
     checkName($snapshot, "the snapshot name");
@@ -248,7 +248,7 @@ export func linkedClone(s as Session, vm as string, snapshot as string, newName 
  * @param options {list of string} `CloneOptions`, such as `Link`
  * @param what {string} the operation, for error messages
  * @return {string} the clone's UUID
- * @throws {Error} kind "virtualboxws" if VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if VirtualBox refuses
  */
 func cloneFrom(
     s as Session,
@@ -306,7 +306,7 @@ func cloneFrom(
  * @param s {Session} the session
  * @param path {string} the appliance file on the VirtualBox host
  * @return {list of string} the UUIDs of the imported machines
- * @throws {Error} kind "virtualboxws" if the path is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the path is unusable or VirtualBox refuses
  */
 export func importOva(s as Session, path as string) {
     return importAppliance($s, $path, "");
@@ -319,7 +319,7 @@ export func importOva(s as Session, path as string) {
  * @param path {string} the appliance file on the VirtualBox host
  * @param name {string} the imported machine's name
  * @return {list of string} the UUIDs of the imported machines
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses (the name is taken)
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses (the name is taken)
  * @example
  *   virtualboxws.importAs($s, "/srv/images/debian.ova", "build-1");
  */
@@ -336,7 +336,7 @@ export func importAs(s as Session, path as string, name as string) {
  * @param path {string} the appliance file
  * @param name {string} the first machine's new name, `""` to keep it
  * @return {list of string} the imported machines' UUIDs
- * @throws {Error} kind "virtualboxws" if the path is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the path is unusable or VirtualBox refuses
  */
 func importAppliance(s as Session, path as string, name as string) {
     checkAppliance($path);
@@ -370,7 +370,7 @@ func importAppliance(s as Session, path as string, name as string) {
  * @param app {string} the appliance
  * @param name {string} the name
  * @param what {string} the operation, for error messages
- * @throws {Error} kind "virtualboxws" if the appliance holds no machine or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the appliance holds no machine or VirtualBox refuses
  */
 func rename(s as Session, app as string, name as string, what as string) {
     def descriptions as list of string init all(
@@ -416,7 +416,7 @@ func rename(s as Session, app as string, name as string, what as string) {
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @param path {string} the appliance file to write on the host
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
  */
 export func exportOva(s as Session, vm as string, path as string) {
     checkAppliance($path);
@@ -444,7 +444,7 @@ export func exportOva(s as Session, vm as string, path as string) {
  * Refuse an appliance path: a path ending in `.ova` or `.ovf`.
  *
  * @param path {string} the path
- * @throws {Error} kind "virtualboxws" if it is unusable
+ * @throws {VirtualboxwsError} kind "virtualboxws" if it is unusable
  */
 func checkAppliance(path as string) {
     checkText($path, "the appliance file");

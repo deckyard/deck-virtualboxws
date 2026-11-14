@@ -17,7 +17,7 @@ def const IP_POLL_MS as int init 1000;
  * @param vm {string} the machine's name or UUID
  * @param key {string} the property, such as `/VirtualBox/GuestInfo/OS/Product`
  * @return {string} its value, `""` when it is not set
- * @throws {Error} kind "virtualboxws" if an argument is unusable or a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or a call fails
  */
 export func guestProperty(s as Session, vm as string, key as string) {
     checkText($key, "the property");
@@ -38,7 +38,7 @@ export func guestProperty(s as Session, vm as string, key as string) {
  * @param vm {string} the machine's name or UUID
  * @param key {string} the property
  * @param value {string} its value; use `unsetGuestProperty` to remove it
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
  */
 export func setGuestProperty(s as Session, vm as string, key as string, value as string) {
     checkText($key, "the property");
@@ -57,7 +57,7 @@ export func setGuestProperty(s as Session, vm as string, key as string, value as
  * @param s {Session} the session
  * @param vm {string} the machine's name or UUID
  * @param key {string} the property
- * @throws {Error} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or VirtualBox refuses
  */
 export func unsetGuestProperty(s as Session, vm as string, key as string) {
     checkText($key, "the property");
@@ -78,7 +78,7 @@ export func unsetGuestProperty(s as Session, vm as string, key as string) {
  * @param method {string} the `IMachine` method
  * @param args {map of string to list of string} its parameters
  * @param what {string} the operation, for error messages
- * @throws {Error} kind "virtualboxws" if VirtualBox refuses
+ * @throws {VirtualboxwsError} kind "virtualboxws" if VirtualBox refuses
  */
 func onMutable(
     s as Session,
@@ -103,7 +103,7 @@ func onMutable(
  * @param vm {string} the machine's name or UUID
  * @param nic {int} the guest's network interface, from 0 (not the NIC slot, which counts from 1)
  * @return {string} the address, `""` before the guest reports one
- * @throws {Error} kind "virtualboxws" if an argument is unusable or a call fails
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable or a call fails
  */
 export func guestIp(s as Session, vm as string, nic as int) {
     checkRange($nic, 0, 35, "the guest interface");
@@ -122,7 +122,7 @@ export func guestIp(s as Session, vm as string, nic as int) {
  * @param nic {int} the guest's network interface, from 0
  * @param timeoutMs {int} how long to wait, 1 to 86400000
  * @return {string} the address
- * @throws {Error} kind "virtualboxws" if an argument is unusable, a call fails, or no address comes in time
+ * @throws {VirtualboxwsError} kind "virtualboxws" if an argument is unusable, a call fails, or no address comes in time
  * @example
  *   virtualboxws.start($s, "web");
  *   def ip as string init virtualboxws.waitForIp($s, "web", 0, 120000);
@@ -147,7 +147,7 @@ export func waitForIp(s as Session, vm as string, nic as int, timeoutMs as int) 
         try {
             $ip = guestIp($polling, $vm, $nic);
         } catch (e) {
-            if (not strings.contains($e.message, ": no answer from ") or
+            if ($e.kind != "virtualboxws" or $e.reason != "timeout" or
                 $polling.config.timeoutMs == $s.config.timeoutMs) {
                 throw $e;
             }

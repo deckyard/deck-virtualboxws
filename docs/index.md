@@ -46,21 +46,29 @@ the VirtualBox host. The deck needs the `net` capability.
 
 ## Errors
 
-Every failure is an `Error` of kind `"virtualboxws"`, its message starting
-with `virtualboxws: `:
+Every failure but a reached `maxBytes` (see below) is a `virtualboxws.VirtualboxwsError` (kind `"virtualboxws"`),
+its message starting with `virtualboxws: `. Its `reason` says which case it
+is, so no code needs to read the message:
 
 - an argument the deck refuses before sending anything: an unusable URL,
   plain `http` to another machine without `withPlainHttp`, an empty name, a
   control character, a number out of range;
-- the service cannot be reached, answers past the deadline, sends more than
-  `maxBytes` or something that is not SOAP;
+- the service cannot be reached (`reason` `"unreachable"`), answers past the
+  deadline (`"timeout"`), an HTTP
+  error (`"http"`, with `status`) or something that is not SOAP (`"reply"`);
 - `logon` is refused, or VirtualBox is older than 7;
 - VirtualBox refuses a call, or a long operation fails or passes its
   deadline (it is then cancelled). The message carries VirtualBox's text and
   its result code: `virtualboxws: findMachine web: Could not find a
   registered machine named 'web' (VBOX_E_OBJECT_NOT_FOUND)`.
-  `virtualboxws.errorCode(e)` returns the code; `INVALID_OBJECT` means the
+  `reason` is `"fault"` for a refused call and `"operation"` for a failed
+  long operation (`"timeout"` past its deadline), `code` holds the code
+  (`virtualboxws.errorCode(e)` returns it too); `INVALID_OBJECT` means the
   service no longer knows the session (it ended an idle one).
+
+A reply over `maxBytes` is the one exception: an `Error` of kind `"limit"`,
+the kind every library uses for a reached cap, with the same `virtualboxws: `
+message.
 
 ```jennifer
 use io;
@@ -68,7 +76,7 @@ use io;
 try {
     virtualboxws.start($s, "web");
 } catch (e) {
-    if (virtualboxws.errorCode($e) == "VBOX_E_INVALID_OBJECT_STATE") {
+    if ($e.kind == "virtualboxws" and $e.code == "VBOX_E_INVALID_OBJECT_STATE") {
         io.printf("web is already running\n");
     } else {
         io.printf("%s\n", $e.message);

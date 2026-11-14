@@ -38,7 +38,7 @@ the check off and lets anyone in the middle read the password.
 
 `logon` returns a `Session`, `logoff` ends it. The service ends a session
 nobody used for its `--timeout` (300 s by default); the next call then fails
-with `errorCode` `INVALID_OBJECT`, and `logoff` on it is no error. Log on
+with `code` `INVALID_OBJECT`, and `logoff` on it is no error. Log on
 again for long pauses.
 
 Every object the deck obtains (a machine, a lock session, a console, a
