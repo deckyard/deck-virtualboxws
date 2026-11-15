@@ -1,6 +1,6 @@
 [package]
 name = "@deckyard/virtualboxws"
-version = "0.2.0"
+version = "0.3.0"
 description = "Oracle VirtualBox 7 through its SOAP web service (vboxwebsrv): machines, power, snapshots, clones, OVA import and export, guest properties"
 license = "LGPL-3.0-only"
 authors = ["mplx <mplx@jennifer-lang.dev>"]
