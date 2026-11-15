@@ -46,14 +46,14 @@ the VirtualBox host. The deck needs the `net` capability.
 
 ## Errors
 
-Every failure but a reached `maxBytes` (see below) is a `virtualboxws.VirtualboxwsError` (kind `"virtualboxws"`),
+Every failure but a reached `maxBytes` and an unreachable service (see below) is a `virtualboxws.VirtualboxwsError` (kind `"virtualboxws"`),
 its message starting with `virtualboxws: `. Its `reason` says which case it
 is, so no code needs to read the message:
 
 - an argument the deck refuses before sending anything: an unusable URL,
   plain `http` to another machine without `withPlainHttp`, an empty name, a
   control character, a number out of range;
-- the service cannot be reached (`reason` `"unreachable"`), answers past the
+- the service sends no complete reply (`reason` `"unreachable"`), answers past the
   deadline (`"timeout"`), an HTTP
   error (`"http"`, with `status`) or something that is not SOAP (`"reply"`);
 - `logon` is refused, or VirtualBox is older than 7;
@@ -66,9 +66,12 @@ is, so no code needs to read the message:
   (`virtualboxws.errorCode(e)` returns it too); `INVALID_OBJECT` means the
   service no longer knows the session (it ended an idle one).
 
-A reply over `maxBytes` is the one exception: an `Error` of kind `"limit"`,
+A reply over `maxBytes` is one exception: an `Error` of kind `"limit"`,
 the kind every library uses for a reached cap, with the same `virtualboxws: `
-message.
+message. A service that cannot be reached at all (connection refused or
+reset, DNS, TLS, a close before any answer) is the other: the `http`
+module's `net.NetError` (kind `"net"`), passed on with its fields; `reason`
+says which, and `sent` false means the service never got the request.
 
 ```jennifer
 use io;

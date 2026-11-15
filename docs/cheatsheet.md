@@ -11,7 +11,8 @@ import "@deckyard/virtualboxws/" as virtualboxws;
 ```
 
 Every failure is a `VirtualboxwsError` (kind `"virtualboxws"`), except a
-cancelled task (kind `"cancelled"`). A `c` argument is a
+reply over `maxBytes` (kind `"limit"`), a cancelled task (kind `"cancelled"`)
+and a service that cannot be reached (a `net.NetError`, kind `"net"`). A `c` argument is a
 `Config`, an `s` a `Session`, a `vm` a machine's name or UUID.
 
 ## Constants
@@ -146,6 +147,6 @@ Every error of kind `"virtualboxws"`.
 |---|---|
 | `kind as string` | always `"virtualboxws"` |
 | `message as string` | `virtualboxws: ` and what went wrong |
-| `reason as string` | `"fault"`, `"http"`, `"timeout"`, `"unreachable"`, `"reply"` (not the expected SOAP), `"operation"` (a long operation failed), `""` otherwise |
+| `reason as string` | `"fault"`, `"http"`, `"timeout"`, `"unreachable"` (no complete reply), `"reply"` (not the expected SOAP), `"operation"` (a long operation failed), `""` otherwise |
 | `code as string` | the fault's or operation's code: `VBOX_E_*` / `E_*` / `0x...` / `INVALID_OBJECT`, `""` if none |
 | `status as int` | the reply's HTTP status, 0 if there was none |

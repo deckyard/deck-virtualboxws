@@ -127,7 +127,7 @@ export def struct Session {
  *
  * @field kind {string} always `"virtualboxws"`
  * @field message {string} `virtualboxws: ` and what went wrong
- * @field reason {string} `"fault"` (the service answered with a SOAP fault), `"http"` (an HTTP error without a fault), `"timeout"` (no answer within the deadline, or a long operation not done by it), `"unreachable"` (no connection or no complete reply), `"reply"` (a reply that is not the expected SOAP), `"operation"` (a long operation such as a clone or an import failed; `code` is its result code), or `""` for any other failure (a check before the call, a refused logon's follow-up checks)
+ * @field reason {string} `"fault"` (the service answered with a SOAP fault), `"http"` (an HTTP error without a fault), `"timeout"` (no answer within the deadline, or a long operation not done by it), `"unreachable"` (no complete reply; a service that cannot be reached at all is a `net.NetError`, kind `"net"`), `"reply"` (a reply that is not the expected SOAP), `"operation"` (a long operation such as a clone or an import failed; `code` is its result code), or `""` for any other failure (a check before the call, a refused logon's follow-up checks)
  * @field code {string} the fault's code: a `VBOX_E_*` or COM `E_*` name, `0x` and eight hex digits, or `INVALID_OBJECT` for a reference the service no longer knows; `""` when there is none
  * @field status {int} the HTTP status of the reply, 0 when there was none
  */
@@ -605,8 +605,9 @@ func attribute(s as Session, iface as string, name as string, this as string, wh
  * @param timeoutMs {int} the deadline
  * @param what {string} the operation, for error messages
  * @return {map of string to list of string} the reply's elements
- * @throws {VirtualboxwsError} kind "virtualboxws" if the service cannot be reached, answers too late or not SOAP, or returns a fault
+ * @throws {VirtualboxwsError} kind "virtualboxws" if the reply is incomplete, answers too late or not SOAP, or returns a fault
  * @throws {Error} kind "limit" if the reply is over `maxBytes`
+ * @throws {net.NetError} kind "net" if the service cannot be reached
  */
 func exchange(
     c as Config,
@@ -661,6 +662,11 @@ func exchange(
                 message: "virtualboxws: " + $what + ": the reply is over " +
                     convert.toString($maxBytes) + " bytes"
             };
+        }
+        # a transport failure (refused, reset, DNS, TLS, a close before any
+        # answer) goes on as the net.NetError it is, fields intact
+        if ($e.kind == "net") {
+            throw $e;
         }
         failWith(
             $what + ": cannot reach " + shown($url) + ": " + cleaned($e.message, 200),

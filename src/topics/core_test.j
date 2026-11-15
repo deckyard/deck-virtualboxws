@@ -424,9 +424,9 @@ func testLogonRefusals() {
         logon(endpoint($f.url), "ada", "pw");
         missed("closed");
     } catch (e) {
-        testing.assertContains(
-            $e.message,
-            "virtualboxws: logon: cannot reach \"" + $f.url + "\": ");
+        # a stopped service refuses: the transport's net.NetError
+        testing.assertEqual($e.kind, "net");
+        testing.assertEqual($e.reason, "refused");
     }
     try {
         logon(endpoint($f.url), "ada\n", "pw");
@@ -548,6 +548,39 @@ func testARequestPastItsDeadline() {
     }
     testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 2500);
     stopFake($f);
+}
+
+# A service that cannot be reached is the transport's net.NetError, passed
+# on with its fields, from logon and from any call.
+func testAnUnreachableServiceIsANetError() {
+    def srv as httpd.Server init httpd.listen("127.0.0.1:0");
+    def url as string init "http://" + httpd.address($srv) + "/";
+    httpd.shutdown($srv);
+    try {
+        logon(endpoint($url), "ada", "secret");
+        missed("unreachable");
+    } catch (e) {
+        testing.assertEqual($e.kind, "net");
+        testing.assertEqual($e.reason, "refused");
+        testing.assertEqual($e.op, "connect");
+        testing.assertFalse($e.sent);
+        testing.assertFalse($e.replied);
+        testing.assertFalse(strings.contains($e.message, "secret"));
+    }
+    def s as Session init Session{
+        config: endpoint($url),
+        vbox: VBOX_REF,
+        version: "7.1.4",
+        major: 7,
+        minor: 1
+    };
+    try {
+        call($s, "IVirtualBox_getVersion", {"_this": [VBOX_REF]});
+        missed("unreachable");
+    } catch (e) {
+        testing.assertEqual($e.kind, "net");
+        testing.assertEqual($e.reason, "refused");
+    }
 }
 
 func testAReplyOverTheCap() {

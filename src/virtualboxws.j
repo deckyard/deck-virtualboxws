@@ -15,9 +15,11 @@
  * before the call returns, also on error. Long operations (start, power off,
  * snapshots, clones, import, export) are waited for with a deadline and
  * cancelled when they pass it. Plain `http` is refused except on this
- * machine unless asked for: `logon` sends the password. Every failure is
- * `Error{kind: "virtualboxws"}`, with the `VBOX_E_*` code where VirtualBox
- * gives one.
+ * machine unless asked for: `logon` sends the password. Every failure is a
+ * `VirtualboxwsError` (kind `"virtualboxws"`), with the `VBOX_E_*` code where
+ * VirtualBox gives one, except a reply over `maxBytes` (kind `"limit"`), a
+ * cancelled task, and a service that cannot be reached: the `net.NetError`
+ * (kind `"net"`) of the `http` module.
  *
  * | topic | covers |
  * | --- | --- |
