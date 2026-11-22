@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.26.0
+# pragma-jennifer-version: >=0.27.0
 
 # virtualboxws - core: the endpoint, the web session, the SOAP exchange, faults
 # and their codes, object references, progress objects, and `call`. Spliced
@@ -189,7 +189,7 @@ func shown(s as string) {
 func cleaned(s as string, most as int) {
     def t as string init $s;
     if (len($t) > $most) {
-        $t = strings.substring($t, 0, $most) + "...";
+        $t = $t[..$most] + "...";
     }
     return regex.replace(UNSHOWN, $t, "?");
 }
@@ -336,11 +336,11 @@ func authority(url as string) {
     if ($at < 0) {
         return "";
     }
-    def rest as string init strings.substring($url, $at + 3);
+    def rest as string init $url[$at + 3..];
     for (def stop in ["/", "?", "#"]) {
         def k as int init strings.indexOf($rest, $stop);
         if ($k >= 0) {
-            $rest = strings.substring($rest, 0, $k);
+            $rest = $rest[..$k];
         }
     }
     return $rest;
@@ -452,7 +452,7 @@ export func logon(c as Config, username as string, password as string) {
         if ($e.kind == "virtualboxws" and ($e.reason == "fault" or $e.reason == "http")) {
             failWith(
                 "logon refused for " + shown($username) + ": " +
-                    strings.substring($e.message, len("virtualboxws: logon: ")),
+                    $e.message[len("virtualboxws: logon: ")..],
                 $e.reason,
                 $e.code,
                 $e.status);
@@ -831,7 +831,7 @@ func codeName(code as string) {
     if ($n > 2159738880 and $n < 2159738880 + len(VBOX_CODES)) {
         return VBOX_CODES[$n - 2159738880];
     }
-    def hex as string init strings.upper(convert.toString($n, 16));
+    def hex as string init strings.upper(io.sprintf("%d|base=16", $n));
     while (len($hex) < 8) {
         $hex = "0" + $hex;
     }

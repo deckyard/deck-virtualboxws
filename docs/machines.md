@@ -43,7 +43,7 @@ use strings;
 
 virtualboxws.takeSnapshot($s, "web", "before-upgrade", "kernel 6.8");
 for (def snap in virtualboxws.snapshots($s, "web")) {
-    io.printf("%s%s\n", strings.repeat("  ", $snap.depth), $snap.name);
+    io.printf("%s%s\n", strings.replicate("  ", $snap.depth), $snap.name);
 }
 virtualboxws.restoreSnapshot($s, "web", "before-upgrade");
 ```

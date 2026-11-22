@@ -105,7 +105,9 @@ Not in scope:
 
 ## Dependencies on the interpreter
 
-- Floor `jennifer >=0.26.0`; the default binary (capability `net`).
+- Floor `jennifer >=0.27.0`; the default binary (capability `net`). The
+  tests use the UTF-8 codec of `encoding.decode` and `strings.replicate`,
+  new in 0.27.0.
 - The bundled `http` and `uri` modules, the `xml` library, tasks with
   `task.waitTimeout`, `task.cancel` and `task.discard`.
 - Kind `"limit"` for reached caps (M28.54) and `"cancelled"` for a cancelled

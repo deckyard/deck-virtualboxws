@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.26.0
+# pragma-jennifer-version: >=0.27.0
 
 # virtualboxws - white-box tests for the guest topic. Spliced into
 # virtualboxws_test.j via include.
@@ -70,7 +70,9 @@ func testGuestIpAndWaitForIp() {
 
 func testWaitForIpBoundsEachRequest() {
     def answers as map of string to string init baseAnswers();
-    $answers["IMachine_getGuestPropertyValue"] = "!sleep 4000";
+    # Answers 250 ms after the 500 ms wait is over; the deferred release
+    # queues behind it, so the call returns at about 750 ms.
+    $answers["IMachine_getGuestPropertyValue"] = "!sleep 750";
     def f as Fake init startFake($answers);
     def started as time.Time init time.now();
     try {
@@ -81,6 +83,6 @@ func testWaitForIpBoundsEachRequest() {
             $e.message,
             "virtualboxws: web reported no IP address for interface 0 within 500 ms (the last request did not answer)");
     }
-    testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 2500);
+    testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 1000);
     stopFake($f);
 }

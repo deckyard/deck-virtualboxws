@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.26.0
+# pragma-jennifer-version: >=0.27.0
 
 # virtualboxws - white-box tests for the core topic, and the fake web service
 # every topic's tests share. Spliced into virtualboxws_test.j via include.
@@ -100,13 +100,13 @@ func serveSoap(srv as httpd.Server, answers as map of string to string) {
         } catch (e) {
             return $seen;
         }
-        def body as string init convert.stringFromBytes("utf-8", httpd.body($req));
+        def body as string init encoding.decode("utf-8", httpd.body($req));
         def parts as list of string init summary($body);
         def method as string init $parts[0];
         def this as string init "";
         for (def p in $parts) {
             if (strings.startsWith($p, "_this=")) {
-                $this = strings.substring($p, 6);
+                $this = $p[6..];
             }
         }
         if (httpd.header($req, "SOAPAction") != "\"\"" or
@@ -169,16 +169,13 @@ func summary(body as string) {
 func answerSpec(req as httpd.Request, method as string, spec as string) {
     httpd.setHeader($req, "Content-Type", "text/xml; charset=utf-8");
     if (strings.startsWith($spec, "!raw ")) {
-        def rest as string init strings.substring($spec, 5);
+        def rest as string init $spec[5..];
         def sp as int init strings.indexOf($rest, " ");
-        httpd.respond(
-            $req,
-            convert.toInt(strings.substring($rest, 0, $sp)),
-            strings.substring($rest, $sp + 1));
+        httpd.respond($req, convert.toInt($rest[..$sp]), $rest[$sp + 1..]);
         return;
     }
     if (strings.startsWith($spec, "!sleep ")) {
-        time.sleep(time.fromMilliseconds(convert.toInt(strings.substring($spec, 7))));
+        time.sleep(time.fromMilliseconds(convert.toInt($spec[7..])));
         $spec = "";
     }
     def env as string init "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"" + SOAP_NS + "\" xmlns:vbox=\"" +
@@ -186,10 +183,10 @@ func answerSpec(req as httpd.Request, method as string, spec as string) {
         "\"><SOAP-ENV:Body>";
     def end as string init "</SOAP-ENV:Body></SOAP-ENV:Envelope>";
     if (strings.startsWith($spec, "!fault ")) {
-        def rest as string init strings.substring($spec, 7);
+        def rest as string init $spec[7..];
         def sp as int init strings.indexOf($rest, " ");
-        def code as string init strings.substring($rest, 0, $sp);
-        def text as string init strings.substring($rest, $sp + 1);
+        def code as string init $rest[..$sp];
+        def text as string init $rest[$sp + 1..];
         httpd.respond(
             $req,
             500,
@@ -217,7 +214,7 @@ func answerSpec(req as httpd.Request, method as string, spec as string) {
             $req,
             500,
             $env + "<SOAP-ENV:Fault><faultcode>SOAP-ENV:Server</faultcode><faultstring>" +
-                escaped(strings.substring($spec, 6)) + "</faultstring></SOAP-ENV:Fault>" + $end);
+                escaped($spec[6..]) + "</faultstring></SOAP-ENV:Fault>" + $end);
         return;
     }
     def inner as string init "";
@@ -226,8 +223,8 @@ func answerSpec(req as httpd.Request, method as string, spec as string) {
             continue;
         }
         def eq as int init strings.indexOf($line, "=");
-        def name as string init strings.substring($line, 0, $eq);
-        $inner = $inner + "<" + $name + ">" + escaped(strings.substring($line, $eq + 1)) + "</" +
+        def name as string init $line[..$eq];
+        $inner = $inner + "<" + $name + ">" + escaped($line[$eq + 1..]) + "</" +
             $name + ">";
     }
     httpd.respond(
@@ -297,7 +294,7 @@ func released(seen as list of string) {
     def out as list of string init [];
     for (def r in $seen) {
         if (strings.startsWith($r, "IManagedObjectRef_release|_this=")) {
-            $out[] = strings.substring($r, len("IManagedObjectRef_release|_this="));
+            $out[] = $r[len("IManagedObjectRef_release|_this=")..];
         }
     }
     return strings.join(lists.sort($out), ",");
@@ -531,8 +528,9 @@ func testAReplyForAnotherMethodIsRefused() {
     }
 }
 
+# The 1000 ms floor timeout fires before the fake's 1250 ms answer.
 func testARequestPastItsDeadline() {
-    def f as Fake init startFake({"IVirtualBox_getVersion": "!sleep 3000"});
+    def f as Fake init startFake({"IVirtualBox_getVersion": "!sleep 1250"});
     def s as Session init fakeSession($f);
     $s.config = withTimeout($s.config, 1000);
     def started as time.Time init time.now();
@@ -546,7 +544,7 @@ func testARequestPastItsDeadline() {
                 "\" within 1000 ms");
         testing.assertEqual($e.reason, "timeout");
     }
-    testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 2500);
+    testing.assertTrue(time.milliseconds(time.sub(time.now(), $started)) < 1250);
     stopFake($f);
 }
 
@@ -585,7 +583,7 @@ func testAnUnreachableServiceIsANetError() {
 
 func testAReplyOverTheCap() {
     def f as Fake init startFake({
-        "IVirtualBox_getVersion": "returnval=" + strings.repeat("x", 70000)
+        "IVirtualBox_getVersion": "returnval=" + strings.replicate("x", 70000)
     });
     def s as Session init fakeSession($f);
     $s.config = withMaxBytes($s.config, 65536);
@@ -708,5 +706,5 @@ func testWaitForCancelsAtTheDeadline() {
 
 func testShownCleans() {
     testing.assertEqual(shown("a\u0001b‮c"), "\"a?b?c\"");
-    testing.assertEqual(len(shown(strings.repeat("x", 300))), 205);
+    testing.assertEqual(len(shown(strings.replicate("x", 300))), 205);
 }

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.26.0
+# pragma-jennifer-version: >=0.27.0
 
 # virtualboxws - snapshots: snapshots, full and linked clones, and OVA / OVF
 # import and export. Spliced into virtualboxws.j via include.
@@ -32,7 +32,7 @@ export def struct Snapshot {
  * @throws {VirtualboxwsError} kind "virtualboxws" if the name is unusable, there is no such machine or a call fails
  * @example
  *   for (def snap in virtualboxws.snapshots($s, "web")) {
- *       io.printf("%s%s\n", strings.repeat("  ", $snap.depth), $snap.name);
+ *       io.printf("%s%s\n", strings.replicate("  ", $snap.depth), $snap.name);
  *   }
  */
 export func snapshots(s as Session, vm as string) {
@@ -63,8 +63,8 @@ export func snapshots(s as Session, vm as string) {
     while (len($stack) > 0) {
         def ref as string init $stack[len($stack) - 1];
         def depth as int init $depths[len($depths) - 1];
-        $stack = lists.slice($stack, 0, len($stack) - 1);
-        $depths = lists.slice($depths, 0, len($depths) - 1);
+        $stack = $stack[..len($stack) - 1];
+        $depths = $depths[..len($depths) - 1];
         def children as list of string init [];
         try {
             def uuid as string init attribute($s, "ISnapshot", "Id", $ref, $what);

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.26.0
+# pragma-jennifer-version: >=0.27.0
 
 /**
  * White-box tests: jennifer test src/virtualboxws_test.j
@@ -13,6 +13,7 @@
  */
 use testing;
 use httpd;
+use encoding;
 
 include "topics/core_test.j";
 include "topics/machines_test.j";
