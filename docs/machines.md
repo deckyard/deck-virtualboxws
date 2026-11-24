@@ -31,7 +31,7 @@ virtualboxws.powerOff($s, "web");          # or pull the plug, and wait
 
 `startWith($s, "web", "gui")` opens a window on the host's desktop (the
 service must run in that desktop session). `pause`, `resume`, `reset` and
-`saveState` do what the VirtualBox menu does. Each locks the machine for a
+`saveState` do what the VirtualBox™ menu does. Each locks the machine for a
 moment through a session of its own and unlocks it before returning, also
 when it fails.
 

@@ -3,7 +3,7 @@
 
 # @deckyard/virtualboxws
 
-Oracle VirtualBox 7 from a Jennifer program over VirtualBox's SOAP web
+Oracle™ VirtualBox™ 7 from a Jennifer program over VirtualBox's SOAP web
 service, `vboxwebsrv`: for a VirtualBox host the program reaches over the
 network and cannot run programs on. Where the program can run `VBoxManage`
 (locally or over `ssh`), the [`@deckyard/virtualbox`](https://github.com/deckyard/deck-virtualbox)
@@ -86,3 +86,11 @@ try {
     }
 }
 ```
+
+## Trademarks
+
+Oracle™ and VirtualBox™ are trademarks of Oracle Corporation and/or its
+affiliates. VBoxManage™ and other product and company names may be
+trademarks of their respective owners. They are used only to identify the
+products this deck works with. This deck is an independent project, not
+affiliated with, sponsored or endorsed by Oracle Corporation.

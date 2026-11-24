@@ -5,7 +5,7 @@
 
 ## Scope
 
-`@deckyard/virtualboxws` drives Oracle VirtualBox 7 through its SOAP web
+`@deckyard/virtualboxws` drives Oracle™ VirtualBox™ 7 through its SOAP web
 service, `vboxwebsrv`, for a host that can be reached over the network but
 where running programs is not wanted: logon and logoff, machines, power,
 snapshots, clones, OVA import and export, and guest properties. `call`
@@ -16,7 +16,7 @@ Not in scope:
 - **Running `VBoxManage`.** That is the separate `@deckyard/virtualbox` deck,
   which also covers remote hosts over `ssh`. Capabilities are per deck, so
   the two stay apart; they share function names and shapes by convention
-  (state names as VBoxManage prints them), not by code.
+  (state names as VBoxManage™ prints them), not by code.
 - **Guest control.** Running programs in the guest and copying files are not
   offered here.
 - **VirtualBox before 7.** Older majors are refused.

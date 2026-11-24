@@ -4,7 +4,7 @@
 [![Documentation](https://img.shields.io/badge/docs-github%20pages-blue)](https://deckyard.github.io/deck-virtualboxws/)
 [![release](https://img.shields.io/github/v/release/deckyard/deck-virtualboxws)](https://github.com/deckyard/deck-virtualboxws/releases/latest)
 
-Oracle VirtualBox 7 for [Jennifer](https://jennifer-lang.dev/) programs,
+Oracle™ VirtualBox™ 7 for [Jennifer](https://jennifer-lang.dev/) programs,
 through VirtualBox's SOAP web service (`vboxwebsrv`): list machines, start
 and stop them, take and restore snapshots, clone, import and export
 appliances, and read the guest's IP, on a host reached over HTTP(S) instead
@@ -60,3 +60,11 @@ LGPL-3.0-only, see [LICENSE](LICENSE). Copyright (C) 2026 mplx &lt;mplx@jennifer
 
 `tools/check-headers.sh` checks every source file's SPDX header against
 `deck.toml`.
+
+## Trademarks
+
+Oracle™ and VirtualBox™ are trademarks of Oracle Corporation and/or its
+affiliates. VBoxManage™ and other product and company names may be
+trademarks of their respective owners. They are used only to identify the
+products this deck works with. This deck is an independent project, not
+affiliated with, sponsored or endorsed by Oracle Corporation.

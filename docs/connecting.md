@@ -5,7 +5,7 @@
 
 ## The web service
 
-`vboxwebsrv` ships with VirtualBox but is off by default. On the host, as
+`vboxwebsrv` ships with VirtualBox™ but is off by default. On the host, as
 the user whose machines it serves:
 
 ```sh

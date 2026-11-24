@@ -23,7 +23,7 @@ and a service that cannot be reached (a `net.NetError`, kind `"net"`). A `c` arg
 | `DEFAULT_TIMEOUT_MS` | `60000` | how long an ordinary request may take |
 | `DEFAULT_LONG_TIMEOUT_MS` | `3600000` | how long a start, power-off, snapshot, clone, import or export may take |
 | `DEFAULT_MAX_BYTES` | `1048576` | the largest reply read; a full reply takes about 40 MiB to parse |
-| `MIN_MAJOR` | `7` | the oldest VirtualBox major version `logon` accepts |
+| `MIN_MAJOR` | `7` | the oldest VirtualBox™ major version `logon` accepts |
 
 ## Connecting
 
@@ -49,7 +49,7 @@ and a service that cannot be reached (a `net.NetError`, kind `"net"`). A `c` arg
 | `virtualboxws.runningVms(s)` | `list of Vm` | the running ones (running, paused, starting, ...) |
 | `virtualboxws.hasVm(s, vm)` | `bool` | whether a machine is registered |
 | `virtualboxws.info(s, vm)` | `VmInfo` | state, type, memory, processors, snapshots |
-| `virtualboxws.state(s, vm)` | `string` | `poweroff`, `running`, `paused`, `saved`, ... as VBoxManage names them |
+| `virtualboxws.state(s, vm)` | `string` | `poweroff`, `running`, `paused`, `saved`, ... as VBoxManage™ names them |
 | `virtualboxws.start(s, vm)` | `null` | start without a window and wait |
 | `virtualboxws.startWith(s, vm, mode)` | `null` | start `headless`, `gui` or `separate` |
 | `virtualboxws.powerOff(s, vm)` | `null` | pull the plug and wait |
