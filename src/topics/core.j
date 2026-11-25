@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.27.0
+# pragma-jennifer-version: >=0.28.0
 
 # virtualboxws - core: the endpoint, the web session, the SOAP exchange, faults
 # and their codes, object references, progress objects, and `call`. Spliced
@@ -620,14 +620,12 @@ func exchange(
     def tls as http.TlsOptions init $c.tls;
     def maxBytes as int init $c.maxBytes;
     def t as task of http.Response init spawn {
-        return http.requestWithTls(
+        return http.send(
             "POST",
             $url,
             {"Content-Type": "text/xml; charset=utf-8", "SOAPAction": "\"\""},
             $body,
-            $timeoutMs,
-            $maxBytes,
-            $tls);
+            httpOptions($timeoutMs, $maxBytes, $tls));
     };
     def r as http.Response;
     try {
@@ -1111,4 +1109,21 @@ func waitFor(s as Session, progress as string, timeoutMs as int, what as string)
         $tail = " (" + $name + ")";
     }
     failWith($what + ": " + cleaned($text, 300) + $tail, "operation", $name, 0);
+}
+
+# httpOptions is the http.Options a positional timeout, body cap and TLS
+# setting stand for: a timeout of 0 means no idle timeout, as it did for the
+# positional calls.
+func httpOptions(timeoutMs as int, maxBytes as int, tls as http.TlsOptions) {
+    def o as http.Options;
+    $o.timeoutMs = $timeoutMs;
+    if ($timeoutMs == 0) {
+        $o.timeoutMs = math.MAX_INT;
+    }
+    $o.maxBytes = $maxBytes;
+    def t as net.TLSOptions;
+    $t.skipVerify = $tls.skipVerify;
+    $t.caCert = $tls.caCert;
+    $o.tlsOptions = $t;
+    return $o;
 }

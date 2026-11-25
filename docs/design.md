@@ -105,7 +105,7 @@ Not in scope:
 
 ## Dependencies on the interpreter
 
-- Floor `jennifer >=0.27.0`; the default binary (capability `net`). The
+- Floor `jennifer >=0.28.0` (the calls 0.29.0 removes are replaced by their 0.28.0 forms); the default binary (capability `net`). The
   tests use the UTF-8 codec of `encoding.decode` and `strings.replicate`,
   new in 0.27.0.
 - The bundled `http` and `uri` modules, the `xml` library, tasks with
